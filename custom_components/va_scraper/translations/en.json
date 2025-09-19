@@ -1,0 +1,26 @@
+{
+    "title": "VA Scraper",
+    "config": {
+        "step": {
+            "user": {
+                "title": "VA Scraper",
+                "description": "Create a sensor that scrapes award seat availability for a given route and month.",
+                "data": {
+                    "name": "Scraper name",
+                    "origin": "Departure airport",
+                    "destination": "Arrival airport",
+                    "month": "Month of travel",
+                    "year": "Year of travel",
+                    "days_to_scrape": "Flying days to scrape availability"
+                },
+                "data_description": {
+                    "origin": "Airport of departure.",
+                    "destination": "Airport of arrival.",
+                    "month": "Month of travel - 0 padded (01, 02...).",
+                    "year": "Year of travel.",
+                    "days_to_scrape": "Flying days - if multiple then separate by semi-colon."
+                }
+            }
+        }
+    }
+}

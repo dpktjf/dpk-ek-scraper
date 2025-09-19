@@ -1,0 +1,7 @@
+{
+    "name": "DPK Reward Scraper",
+    "country": "ALL",
+    "hide_default_branch": true,
+    "homeassistant": "2024.11.0",
+    "render_readme": true
+}
