@@ -1,0 +1,62 @@
+{
+    "title": "EK Flight Integration",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configure flight",
+                "data": {
+                    "name": "Name for this flight"
+                },
+                "data_description": {
+                    "name": "A friendly name for this flight configuration"
+                }
+            },
+            "init": {
+                "title": "Configure flight",
+                "data": {
+                    "origin": "Origin airport code",
+                    "destination": "Destination airport code",
+                    "departure_date": "Departure date",
+                    "return_date": "Return date",
+                    "max_legs": "Maximum number of legs",
+                    "max_duration": "Maximum duration (hours)",
+                    "class": "Class of travel"
+                },
+                "data_description": {
+                    "origin": "IATA code of the origin airport (e.g., 'JFK')",
+                    "destination": "IATA code of the destination airport (e.g., 'DXB')",
+                    "departure_date": "Date of departure (YYYY-MM-DD)",
+                    "return_date": "Date of return (YYYY-MM-DD)",
+                    "max_legs": "Maximum number of legs (1-3)",
+                    "max_duration": "Maximum duration in hours",
+                    "class": "Class of travel (economy, premium, business, first)"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Edit flight settings",
+                "data": {
+                    "origin": "Origin airport code",
+                    "destination": "Destination airport code",
+                    "departure_date": "Departure date",
+                    "return_date": "Return date",
+                    "max_legs": "Maximum number of legs",
+                    "max_duration": "Maximum duration (hours)",
+                    "class": "Class of travel"
+                },
+                "data_description": {
+                    "origin": "IATA code of the origin airport (e.g., 'JFK')",
+                    "destination": "IATA code of the destination airport (e.g., 'DXB')",
+                    "departure_date": "Date of departure (YYYY-MM-DD)",
+                    "return_date": "Date of return (YYYY-MM-DD)",
+                    "max_legs": "Maximum number of legs (1-3)",
+                    "max_duration": "Maximum duration in hours",
+                    "class": "Class of travel (economy, premium, business, first)"
+                }
+            }
+        }
+    }
+}

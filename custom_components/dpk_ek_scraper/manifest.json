@@ -1,0 +1,14 @@
+{
+  "domain": "dpk_ek_scraper",
+  "name": "DPK Reward Scraper",
+  "codeowners": [
+    "@dpktjf"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/dpktjf/dpk-ek-scraper",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/dpktjf/dpk-ek-scraper/issues",
+  "requirements": [],
+  "version": "2025.9.1"
+}

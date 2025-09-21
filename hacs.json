@@ -1,0 +1,7 @@
+{
+    "name": "DPK EK Scraper",
+    "country": "ALL",
+    "hide_default_branch": true,
+    "homeassistant": "2025.9.4",
+    "render_readme": true
+}
