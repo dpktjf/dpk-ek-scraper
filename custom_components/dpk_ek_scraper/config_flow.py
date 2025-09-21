@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import logging
 from typing import Any
 
@@ -38,6 +39,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 FLIGHT_CLASS_OPTIONS = ["economy", "premium", "business", "first"]
+TODAY = datetime.datetime.now(tz=datetime.UTC).date().isoformat()
 CONFIG_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): selector.TextSelector(),
@@ -45,16 +47,16 @@ CONFIG_SCHEMA = vol.Schema(
 )
 OPTIONS = vol.Schema(
     {
-        vol.Required(CONF_ORIGIN, default=vol.UNDEFINED): str,
-        vol.Required(CONF_DEST, default=vol.UNDEFINED): str,
-        vol.Required(CONF_CLASS, default=vol.UNDEFINED): selector.SelectSelector(
+        vol.Required(CONF_ORIGIN, default="LON"): str,
+        vol.Required(CONF_DEST, default="DXB"): str,
+        vol.Required(CONF_CLASS, default="economy"): selector.SelectSelector(
             selector.SelectSelectorConfig(
                 options=FLIGHT_CLASS_OPTIONS,
                 mode=selector.SelectSelectorMode.DROPDOWN,
             )
         ),
-        vol.Required(CONF_DEPART, default=vol.UNDEFINED): selector.DateSelector(),
-        vol.Required(CONF_RETURN, default=vol.UNDEFINED): selector.DateSelector(),
+        vol.Required(CONF_DEPART, default=TODAY): selector.DateSelector(),
+        vol.Required(CONF_RETURN, default=TODAY): selector.DateSelector(),
         vol.Required(CONF_MAX_LEGS, default=1): selector.NumberSelector(
             selector.NumberSelectorConfig(
                 mode=selector.NumberSelectorMode.BOX,  # up/down arrows
@@ -63,7 +65,14 @@ OPTIONS = vol.Schema(
                 step=1,
             )
         ),
-        vol.Required(CONF_MAX_DURATION, default=15): str,
+        vol.Required(CONF_MAX_DURATION, default=15.0): selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                mode=selector.NumberSelectorMode.BOX,  # up/down arrows
+                min=5.0,
+                max=35.0,
+                step=1.0,
+            )
+        ),
     }
 )
 
@@ -91,94 +100,50 @@ class ScraperConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(
         config_entry: ConfigEntry,
-    ) -> OptionsFlowHandler:
+    ) -> MyIntegrationOptionsFlowHandler:
         """Get the options flow for this handler."""
-        return OptionsFlowHandler(config_entry)
+        return MyIntegrationOptionsFlowHandler(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None
     ) -> ConfigFlowResult:
-        """Handle initial step."""
-        if user_input:
-            self.config = user_input
-            if user_input[CONF_NAME] in configured_instances(self.hass):
-                errors = {}
-                errors[CONF_NAME] = "already_configured"
-                return self.async_show_form(
-                    step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
+        errors = {}
+        if user_input is not None:
+            # Build a key tuple from user input
+            new_key = (
+                user_input[CONF_ORIGIN],
+                user_input[CONF_DEST],
+                user_input[CONF_CLASS],
+                user_input[CONF_DEPART],
+                user_input[CONF_RETURN],
+            )
+
+            # Iterate existing entries
+            for entry in self._async_current_entries():
+                existing_key = (
+                    entry.data[CONF_ORIGIN],
+                    entry.data[CONF_DEST],
+                    entry.data[CONF_CLASS],
+                    entry.data[CONF_DEPART],
+                    entry.data[CONF_RETURN],
+                )
+                if new_key == existing_key:
+                    errors["base"] = "already_configured"
+                    break
+
+            if not errors:
+                return self.async_create_entry(
+                    title=f"{user_input[CONF_ORIGIN]} → {user_input[CONF_DEST]}",
+                    data=user_input,
                 )
 
-            return await self.async_step_init()
-        return self.async_show_form(step_id="user", data_schema=CONFIG_SCHEMA)
-
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Show basic config for vertical blinds."""
-        if user_input is not None:
-            self.config.update(user_input)
-            return await self.async_step_update()
-
-        return self.async_show_form(
-            step_id="init",
-            data_schema=OPTIONS,
-        )
-
-    async def async_step_update(
-        self,
-        user_input: dict[str, Any] | None = None,  # noqa: ARG002
-    ) -> ConfigFlowResult:
-        """Create entry."""
-        return self.async_create_entry(
-            title=self.config[CONF_NAME],
-            data={
-                CONF_NAME: self.config[CONF_NAME],
-            },
-            options={
-                CONF_ORIGIN: self.config.get(CONF_ORIGIN),
-                CONF_DEST: self.config.get(CONF_DEST),
-                CONF_DEPART: self.config.get(CONF_DEPART),
-                CONF_RETURN: self.config.get(CONF_RETURN),
-                CONF_MAX_LEGS: self.config.get(CONF_MAX_LEGS),
-                CONF_MAX_DURATION: self.config.get(CONF_MAX_DURATION),
-                CONF_CLASS: self.config.get(CONF_CLASS),
-            },
-        )
-
-
-class OptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
-        self.current_config: dict = dict(config_entry.data)
-        self.options = dict(config_entry.options)
-        _LOGGER.debug("options=%s", self.options)
-
-    async def async_step_init(
-        self,
-        user_input: dict[str, Any] | None = None,
-    ) -> ConfigFlowResult:
-        """Manage the options."""
-        schema = OPTIONS
-        if user_input is not None:
-            self.options.update(user_input)
-            return await self._update_options()
-        return self.async_show_form(
-            step_id="init",
-            data_schema=self.add_suggested_values_to_schema(
-                schema, user_input or self.options
-            ),
-        )
-
-    async def _update_options(self) -> ConfigFlowResult:
-        """Update config entry options."""
-        return self.async_create_entry(title="", data=self.options)
+        return self.async_show_form(step_id="user", data_schema=OPTIONS, errors=errors)
 
 
 class MyIntegrationOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow (modify settings after initial setup)."""
 
-    def __init__(self, config_entry):
+    def __init__(self, config_entry: config_entries.ConfigEntry):
         self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
@@ -189,23 +154,52 @@ class MyIntegrationOptionsFlowHandler(config_entries.OptionsFlow):
             {
                 vol.Required(
                     CONF_ORIGIN,
-                    default=self.config_entry.options.get(CONF_ORIGIN),
+                    default=self.config_entry.options.get(
+                        CONF_ORIGIN, self.config_entry.data.get(CONF_ORIGIN, "")
+                    ),
                 ): str,
                 vol.Required(
                     CONF_DEST,
-                    default=self.config_entry.options.get(CONF_DEST),
+                    default=self.config_entry.options.get(
+                        CONF_DEST, self.config_entry.data.get(CONF_DEST, "")
+                    ),
                 ): str,
                 vol.Required(
+                    CONF_CLASS,
+                    default=self.config_entry.options.get(
+                        CONF_CLASS, self.config_entry.data.get(CONF_CLASS, "")
+                    ),
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=FLIGHT_CLASS_OPTIONS,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Required(
                     CONF_DEPART,
-                    default=self.config_entry.options.get(CONF_DEPART),
+                    default=self.config_entry.options.get(
+                        CONF_DEPART,
+                        self.config_entry.data.get(
+                            CONF_DEPART,
+                            datetime.datetime.now(tz=datetime.UTC).date().isoformat(),
+                        ),
+                    ),
                 ): selector.DateSelector(),
                 vol.Required(
                     CONF_RETURN,
-                    default=self.config_entry.options.get(CONF_RETURN),
+                    default=self.config_entry.options.get(
+                        CONF_RETURN,
+                        self.config_entry.data.get(
+                            CONF_RETURN,
+                            datetime.datetime.now(tz=datetime.UTC).date().isoformat(),
+                        ),
+                    ),
                 ): selector.DateSelector(),
                 vol.Required(
                     CONF_MAX_LEGS,
-                    default=self.config_entry.options.get(CONF_MAX_LEGS),
+                    default=self.config_entry.options.get(
+                        CONF_MAX_LEGS, self.config_entry.data.get(CONF_MAX_LEGS, 2)
+                    ),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         mode=selector.NumberSelectorMode.BOX,  # up/down arrows
@@ -216,17 +210,11 @@ class MyIntegrationOptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 vol.Required(
                     CONF_MAX_DURATION,
-                    default=self.config_entry.options.get(CONF_MAX_DURATION),
-                ): str,
-                vol.Required(
-                    CONF_CLASS,
-                    default=self.config_entry.options.get(CONF_CLASS),
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=FLIGHT_CLASS_OPTIONS,
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                    )
-                ),
+                    default=self.config_entry.options.get(
+                        CONF_MAX_DURATION,
+                        self.config_entry.data.get(CONF_MAX_DURATION, 15.0),
+                    ),
+                ): float,
             }
         )
 

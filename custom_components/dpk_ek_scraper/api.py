@@ -68,13 +68,13 @@ class ScraperApiClient:
     def __init__(  # noqa: PLR0913
         self,
         config: ScraperConfig,
-        name: str,
+        # name: str,
         session: aiohttp.ClientSession,
     ) -> None:
         """Sample API Client."""
         self.config = config
         self._session = session
-        self._name = name
+        # self._name = name
         self.lock = Lock()
 
     async def async_fetch_flights(self) -> list[Flight]:

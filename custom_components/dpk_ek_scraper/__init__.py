@@ -46,7 +46,9 @@ PLATFORMS: list[Platform] = [
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_SCAN_INTERVAL = timedelta(minutes=10)
+
+def get_option(entry, key):
+    return entry.options.get(key, entry.data.get(key))
 
 
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
@@ -55,20 +57,20 @@ async def async_setup_entry(
     entry: ScraperConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    _name = entry.data[CONF_NAME]
+    # _name = entry.data[CONF_NAME]
     cfg = ScraperConfig(
-        origin=entry.options[CONF_ORIGIN],
-        destination=entry.options[CONF_DEST],
-        departure_date=entry.options[CONF_DEPART],
-        return_date=entry.options[CONF_RETURN],
-        max_legs=entry.options[CONF_MAX_LEGS],
-        max_duration=entry.options[CONF_MAX_DURATION],
-        ticket_class=entry.options[CONF_CLASS],
+        origin=get_option(entry, CONF_ORIGIN),
+        destination=get_option(entry, CONF_DEST),
+        departure_date=get_option(entry, CONF_DEPART),
+        return_date=get_option(entry, CONF_RETURN),
+        max_legs=get_option(entry, CONF_MAX_LEGS),
+        max_duration=get_option(entry, CONF_MAX_DURATION),
+        ticket_class=get_option(entry, CONF_CLASS),
     )
 
     api = ScraperApiClient(
         config=cfg,
-        name=entry.data[CONF_NAME],
+        # name=entry.data[CONF_NAME],
         session=async_get_clientsession(hass),
     )
     # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
