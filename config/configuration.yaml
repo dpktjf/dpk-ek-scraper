@@ -5,6 +5,11 @@ default_config:
 homeassistant:
   debug: true
 
+#jinja:
+#  # This tells HA to load your macros
+#  custom_templates: !include_dir_merge_list jinja_macros
+
+
 #template: !include templates.yaml
 
 # https://www.home-assistant.io/integrations/logger/
@@ -13,3 +18,126 @@ logger:
   logs:
     homeassistant.config_entries: debug
     custom_components.dpk_ek_scraper: debug
+
+template:
+  - sensor:
+      - name: "Cheapest LGW MLE 2026-04 Economy"
+        unit_of_measurement: "GBP"
+        device_class: monetary
+        state: >
+          {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ_lgw_mle_lgw') | list %}
+          {% if flights %}
+            {% set cheapest = flights | min(attribute='state') %}
+            {{ cheapest.state | float(0)}}
+          {% else %}
+            unknown
+          {% endif %}
+        attributes:
+          cheapest_entity: >
+            {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ_lgw_mle_lgw') | list %}
+            {% if flights %}
+              {{ (flights | min(attribute='state')).entity_id }}
+            {% else %}
+              unknown
+            {% endif %}
+          duration: >
+            {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ_lgw_mle_lgw') | list %}
+            {% if flights %}
+              {% set cheapest = flights | min(attribute='state') %}
+              {{ cheapest.attributes.duration | float(0)}}
+            {% else %}
+              unknown
+            {% endif %}
+      - name: "Shortest LGW MLE 2026-04 Economy"
+        unit_of_measurement: "h"
+        device_class: duration
+        state: >
+          {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ_lgw_mle_lgw') | list %}
+          {% if flights %}
+            {% set shortest = flights | min(attribute='attributes.duration') %}
+            {{ shortest.attributes.duration | float(0)}}
+          {% else %}
+            unknown
+          {% endif %}
+        attributes:
+          shortest_entity: >
+            {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ_lgw_mle_lgw') | list %}
+            {% if flights %}
+              {{ (flights | min(attribute='attributes.duration')).entity_id }}
+            {% else %}
+              unknown
+            {% endif %}
+      - name: "Cheapest Shortest LGW MLE 2026-04 Economy"
+        unit_of_measurement: "GBP"
+        device_class: monetary
+        state: >
+          {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ_lgw_mle_lgw') | list %}
+          {% if flights %}
+            {% set cheapest_price = flights | map(attribute='state') | map('float') | min %}
+            {% set cheapest_flights = flights | selectattr('state', 'equalto', cheapest_price|string) | list %}
+            {% set best = cheapest_flights | min(attribute='attributes.duration') %}
+            {{ best.state | float(0) }}
+          {% else %}
+            unknown
+          {% endif %}
+        attributes:
+          cheapest_entity: >
+            {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ_lgw_mle_lgw') | list %}
+            {% if flights %}
+              {% set cheapest_price = flights | map(attribute='state') | map('float') | min %}
+              {% set cheapest_flights = flights | selectattr('state', 'equalto', cheapest_price|string) | list %}
+              {% set best = cheapest_flights | min(attribute='attributes.duration') %}
+              {{ best.entity_id }}
+            {% else %}
+              unknown
+            {% endif %}
+          duration: >
+            {% set flights = states.sensor
+              | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ_lgw_mle_lgw')
+              | list %}
+            {% if flights %}
+              {% set cheapest_price = flights | map(attribute='state') | map('float') | min %}
+              {% set cheapest_flights = flights | selectattr('state', 'equalto', cheapest_price|string) | list %}
+              {% set best = cheapest_flights | min(attribute='attributes.duration') %}
+              {{ best.attributes.duration | float(0) }}
+            {% else %}
+              unknown
+            {% endif %}
+      - name: "Cheapest MLE 2026-04 Economy"
+        unit_of_measurement: "GBP"
+        device_class: monetary
+        state: >
+          {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ') | list %}
+          {% if flights %}
+            {% set cheapest = flights | min(attribute='state') %}
+            {{ cheapest.state | float(0)}}
+          {% else %}
+            unknown
+          {% endif %}
+        attributes:
+          cheapest_entity: >
+            {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ') | list %}
+            {% if flights %}
+              {{ (flights | min(attribute='state')).entity_id }}
+            {% else %}
+              unknown
+            {% endif %}
+      - name: "Shortest MLE 2026-04 Economy"
+        unit_of_measurement: "h"
+        device_class: duration
+        state: >
+          {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ') | list %}
+          {% if flights %}
+            {% set shortest = flights | min(attribute='attributes.duration') %}
+            {{ shortest.attributes.duration | float(0)}}
+          {% else %}
+            unknown
+          {% endif %}
+        attributes:
+          shortest_entity: >
+            {% set flights = states.sensor | selectattr('entity_id', 'match', '^sensor\.flight_2026_04_11_04_22_econ') | list %}
+            {% if flights %}
+              {{ (flights | min(attribute='attributes.duration')).entity_id }}
+            {% else %}
+              unknown
+            {% endif %}

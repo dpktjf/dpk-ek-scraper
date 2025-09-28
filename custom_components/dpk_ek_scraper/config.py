@@ -6,8 +6,9 @@ class ScraperConfig:
     """
     Configuration for the scraper.
 
-    Attributes
-    ----------
+    Attributes:
+    -----------
+
     origin : str
         The airport origin location code.
     destination : str

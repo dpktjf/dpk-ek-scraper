@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 import aiohttp
 import async_timeout
 
-from custom_components.dpk_ek_scraper.api_models import Flight
+from custom_components.dpk_ek_scraper.api_models import Flight, FlightSearchResult
 
 if TYPE_CHECKING:
     from custom_components.dpk_ek_scraper.config import ScraperConfig
@@ -65,7 +65,7 @@ def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
 class ScraperApiClient:
     """API Client."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         config: ScraperConfig,
         # name: str,
@@ -74,17 +74,19 @@ class ScraperApiClient:
         """Sample API Client."""
         self.config = config
         self._session = session
-        # self._name = name
-        self.lock = Lock()
 
-    async def async_fetch_flights(self) -> list[Flight]:
+    async def async_fetch_flights(self) -> FlightSearchResult:
         """Get data from the API."""
-        # uri = f"origin={self._origin}&destination={self._destination}&month={self._month}&year={self._year}&watch={self._days}"  # noqa: E501
-        # _LOGGER.debug("uri=%s", uri)
-        # url=f"http://jupiter:1880/ek-scraper?{uri}",
+        uri = (
+            f"origin={self.config.origin}&destination={self.config.destination}"
+            f"&depart={self.config.departure_date}&return={self.config.return_date}"
+            f"&max_legs={int(self.config.max_legs)}&max_duration={self.config.max_duration}"
+            f"&class={self.config.ticket_class}"
+        )
+        _LOGGER.debug("uri=%s", uri)
         return await self._api_wrapper(
             method="get",
-            url="http://jupiter:1880/ek-scraper",
+            url=f"http://jupiter:1880/ek-scraper?{uri}",
             headers={"Content-type": "application/json; charset=UTF-8"},
         )
 
@@ -97,7 +99,7 @@ class ScraperApiClient:
     ) -> Any:
         """Get information from the API."""
         try:
-            async with async_timeout.timeout(20):
+            async with async_timeout.timeout(180):
                 response = await self._session.request(
                     method=method,
                     url=url,
@@ -106,8 +108,12 @@ class ScraperApiClient:
                 )
                 _verify_response_or_raise(response)
                 raw = await response.json()
-                flights = Flight.from_list(raw)
-                _LOGGER.debug("Fetched %d flights", len(flights))
+                flights = FlightSearchResult.from_dict(raw)
+                _LOGGER.debug(
+                    "Fetched %d flights, returns %d",
+                    len(flights.all_flights),
+                    len(flights.return_flights),
+                )
                 return flights
 
         except TimeoutError as exception:

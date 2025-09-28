@@ -4,19 +4,10 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.components.sensor.const import (
-    DOMAIN as SENSOR_DOMAIN,
-)
-from homeassistant.config_entries import (
-    ConfigEntry,
-    ConfigFlow,
-    ConfigFlowResult,
-    OptionsFlow,
-)
 
 # https://github.com/home-assistant/core/blob/master/homeassistant/const.py
 from homeassistant.const import (
@@ -37,14 +28,15 @@ from .const import (
     DOMAIN,
 )
 
+if TYPE_CHECKING:
+    from homeassistant.config_entries import (
+        ConfigEntry,
+        ConfigFlowResult,
+    )
+
 _LOGGER = logging.getLogger(__name__)
 FLIGHT_CLASS_OPTIONS = ["economy", "premium", "business", "first"]
 TODAY = datetime.datetime.now(tz=datetime.UTC).date().isoformat()
-CONFIG_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_NAME): selector.TextSelector(),
-    }
-)
 OPTIONS = vol.Schema(
     {
         vol.Required(CONF_ORIGIN, default="LON"): str,
@@ -107,9 +99,19 @@ class ScraperConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None
     ) -> ConfigFlowResult:
+        """
+        Handle the initial step of the config flow for user input.
+
+        Args:
+            user_input: Optional dictionary containing user-provided configuration data.
+
+        Returns:
+            ConfigFlowResult: The result of the config flow step.
+
+        """
         errors = {}
         if user_input is not None:
-            # Build a key tuple from user input
+            # Build a key tuple from user input for uniquness check
             new_key = (
                 user_input[CONF_ORIGIN],
                 user_input[CONF_DEST],
@@ -132,9 +134,30 @@ class ScraperConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     break
 
             if not errors:
+                depart = datetime.datetime.strptime(
+                    user_input[CONF_DEPART], "%Y-%m-%d"
+                ).replace(tzinfo=datetime.UTC)
+                retrn = datetime.datetime.strptime(
+                    user_input[CONF_RETURN], "%Y-%m-%d"
+                ).replace(tzinfo=datetime.UTC)
+                flight_str = f"{depart.strftime('%d-%b')} / {retrn.strftime('%d-%b')}"
                 return self.async_create_entry(
-                    title=f"{user_input[CONF_ORIGIN]} → {user_input[CONF_DEST]}",
-                    data=user_input,
+                    title=(
+                        f"{user_input[CONF_ORIGIN]} → {user_input[CONF_DEST]} "
+                        f"({user_input[CONF_CLASS]}) {flight_str}"
+                    ),
+                    # data items are immutable but options items can be changed
+                    data={
+                        CONF_ORIGIN: user_input[CONF_ORIGIN],
+                        CONF_DEST: user_input[CONF_DEST],
+                        CONF_CLASS: user_input[CONF_CLASS],
+                        CONF_DEPART: user_input[CONF_DEPART],
+                        CONF_RETURN: user_input[CONF_RETURN],
+                    },
+                    options={
+                        CONF_MAX_LEGS: user_input[CONF_MAX_LEGS],
+                        CONF_MAX_DURATION: user_input[CONF_MAX_DURATION],
+                    },
                 )
 
         return self.async_show_form(step_id="user", data_schema=OPTIONS, errors=errors)
@@ -143,58 +166,28 @@ class ScraperConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class MyIntegrationOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow (modify settings after initial setup)."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry):
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize the options flow handler with the given config entry."""
         self.config_entry = config_entry
 
-    async def async_step_init(self, user_input=None):
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """
+        Handle the initial step of the options flow.
+
+        Args:
+            user_input: Optional dictionary containing user-provided options.
+
+        Returns:
+            ConfigFlowResult: The result of the options flow step.
+
+        """
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
         options_schema = vol.Schema(
             {
-                vol.Required(
-                    CONF_ORIGIN,
-                    default=self.config_entry.options.get(
-                        CONF_ORIGIN, self.config_entry.data.get(CONF_ORIGIN, "")
-                    ),
-                ): str,
-                vol.Required(
-                    CONF_DEST,
-                    default=self.config_entry.options.get(
-                        CONF_DEST, self.config_entry.data.get(CONF_DEST, "")
-                    ),
-                ): str,
-                vol.Required(
-                    CONF_CLASS,
-                    default=self.config_entry.options.get(
-                        CONF_CLASS, self.config_entry.data.get(CONF_CLASS, "")
-                    ),
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=FLIGHT_CLASS_OPTIONS,
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                    )
-                ),
-                vol.Required(
-                    CONF_DEPART,
-                    default=self.config_entry.options.get(
-                        CONF_DEPART,
-                        self.config_entry.data.get(
-                            CONF_DEPART,
-                            datetime.datetime.now(tz=datetime.UTC).date().isoformat(),
-                        ),
-                    ),
-                ): selector.DateSelector(),
-                vol.Required(
-                    CONF_RETURN,
-                    default=self.config_entry.options.get(
-                        CONF_RETURN,
-                        self.config_entry.data.get(
-                            CONF_RETURN,
-                            datetime.datetime.now(tz=datetime.UTC).date().isoformat(),
-                        ),
-                    ),
-                ): selector.DateSelector(),
                 vol.Required(
                     CONF_MAX_LEGS,
                     default=self.config_entry.options.get(

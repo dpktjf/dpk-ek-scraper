@@ -7,12 +7,11 @@ https://github.com/dpktjf/dpk-ek-irrigation
 
 from __future__ import annotations
 
+import datetime
 import logging
-from datetime import timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.const import (
-    CONF_NAME,
     Platform,
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -21,19 +20,19 @@ from custom_components.dpk_ek_scraper.config import ScraperConfig
 
 from .api import ScraperApiClient
 from .const import (
-    DOMAIN,
-    CONF_ORIGIN,
-    CONF_DEST,
-    CONF_DEPART,
-    CONF_RETURN,
-    CONF_MAX_LEGS,
-    CONF_MAX_DURATION,
     CONF_CLASS,
+    CONF_DEPART,
+    CONF_DEST,
+    CONF_MAX_DURATION,
+    CONF_MAX_LEGS,
+    CONF_ORIGIN,
+    CONF_RETURN,
+    DOMAIN,
 )
 from .coordinator import ScraperDataUpdateCoordinator
-from .data import ScraperData
 
 if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
     from .data import ScraperConfigEntry
@@ -45,10 +44,11 @@ PLATFORMS: list[Platform] = [
 # https://homeassistantapi.readthedocs.io/en/latest/api.html
 
 _LOGGER = logging.getLogger(__name__)
+TODAY = datetime.datetime.now(tz=datetime.UTC).date().isoformat()
 
 
-def get_option(entry, key):
-    return entry.options.get(key, entry.data.get(key))
+def get_option(entry: ConfigEntry, key: str, default=None) -> Any:
+    return entry.options.get(key, entry.data.get(key, default))
 
 
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
@@ -57,20 +57,18 @@ async def async_setup_entry(
     entry: ScraperConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    # _name = entry.data[CONF_NAME]
     cfg = ScraperConfig(
-        origin=get_option(entry, CONF_ORIGIN),
-        destination=get_option(entry, CONF_DEST),
-        departure_date=get_option(entry, CONF_DEPART),
-        return_date=get_option(entry, CONF_RETURN),
-        max_legs=get_option(entry, CONF_MAX_LEGS),
-        max_duration=get_option(entry, CONF_MAX_DURATION),
-        ticket_class=get_option(entry, CONF_CLASS),
+        origin=get_option(entry, CONF_ORIGIN, "LON"),
+        destination=get_option(entry, CONF_DEST, "DXB"),
+        departure_date=get_option(entry, CONF_DEPART, TODAY),
+        return_date=get_option(entry, CONF_RETURN, TODAY),
+        max_legs=get_option(entry, CONF_MAX_LEGS, 2),
+        max_duration=get_option(entry, CONF_MAX_DURATION, 15.5),
+        ticket_class=get_option(entry, CONF_CLASS, "Economy"),
     )
 
     api = ScraperApiClient(
         config=cfg,
-        # name=entry.data[CONF_NAME],
         session=async_get_clientsession(hass),
     )
     # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities

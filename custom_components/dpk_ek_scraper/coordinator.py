@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from regex import F
 
-from custom_components.dpk_ek_scraper.api_models import Flight
+from custom_components.dpk_ek_scraper.api_models import (
+    Flight,
+    FlightSearchResult,
+    ReturnFlight,
+)
 
 from .const import DOMAIN, UPDATE_INTERVAL
 
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
     )
 
 
-class ScraperDataUpdateCoordinator(DataUpdateCoordinator[list[Flight]]):
+class ScraperDataUpdateCoordinator(DataUpdateCoordinator[FlightSearchResult]):
     """Class to manage fetching data from the API."""
 
     def __init__(self, hass: HomeAssistant, client: ScraperApiClient) -> None:
@@ -39,7 +40,7 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[list[Flight]]):
             update_interval=UPDATE_INTERVAL,
         )
 
-    async def _async_update_data(self) -> list[Flight]:
+    async def _async_update_data(self) -> FlightSearchResult:
         """Fetch latest data from the API."""
         try:
             return await self.api.async_fetch_flights()
@@ -50,4 +51,10 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[list[Flight]]):
     def flights(self) -> list[Flight]:
         """Typed accessor for the coordinator data (never None)."""
         # self.data can be None before first refresh; return empty list in that case
-        return list(self.data) if self.data else []
+        return list(self.data.all_flights) if self.data else []
+
+    @property
+    def return_flights(self) -> list[ReturnFlight]:
+        """Typed accessor for the coordinator data (never None)."""
+        # self.data can be None before first refresh; return empty list in that case
+        return list(self.data.return_flights) if self.data else []
