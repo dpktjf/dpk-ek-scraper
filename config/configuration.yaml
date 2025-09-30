@@ -9,7 +9,6 @@ homeassistant:
 #  # This tells HA to load your macros
 #  custom_templates: !include_dir_merge_list jinja_macros
 
-
 #template: !include templates.yaml
 
 # https://www.home-assistant.io/integrations/logger/
