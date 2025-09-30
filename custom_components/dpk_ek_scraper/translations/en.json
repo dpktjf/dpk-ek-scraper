@@ -21,11 +21,11 @@
                     "max_legs": "Maximum number of legs (1-3)",
                     "max_duration": "Maximum duration in hours",
                     "class": "Class of travel (economy, premium, business, first)"
-                },
-                "errors": {
-                    "already_configured": "A flight with the same origin, destination, class, and date already exists."
                 }
             }
+        },
+        "error": {
+            "already_configured": "A flight with the same origin, destination, class, and date already exists."
         }
     },
     "options": {
