@@ -58,9 +58,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up the sensor platform."""
     # use the typed .flights property
+    # skipping individual legs for now - too many sensors
     coordinator: ScraperDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    sensors = [ScraperSensor(coordinator, flight) for flight in coordinator.flights]
-    async_add_entities(sensors)
+    # sensors = [ScraperSensor(coordinator, flight) for flight in coordinator.flights]
+    # async_add_entities(sensors)
     sensors2 = [
         ScraperReturnSensor(coordinator, flight)
         for flight in coordinator.return_flights

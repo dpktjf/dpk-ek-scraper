@@ -141,3 +141,48 @@ template:
             {% else %}
               unknown
             {% endif %}
+      - name: "Cheapest Flight Overall"
+        unit_of_measurement: "GBP"
+        device_class: monetary
+        state: >
+          {% from 'flight_macros.jinja' import select_flight %}
+          {% set chosen = select_flight(states.sensor, '2026_04_11_04_22_econ', 'cheapest')| trim %}
+          {{ states(chosen) if chosen else 'unknown' }}
+        attributes:
+          entity: >
+            {% from 'flight_macros.jinja' import select_flight %}
+            {{ select_flight(states.sensor, '2026_04_11_04_22_econ', 'cheapest')| trim }}
+          duration: >
+            {% from 'flight_macros.jinja' import select_flight %}
+            {% set chosen = select_flight(states.sensor, '2026_04_11_04_22_econ', 'cheapest')| trim %}
+            {{ state_attr(chosen, 'duration') if chosen else 'unknown' }}
+      - name: "Cheapest Fastest Flight Overall"
+        unit_of_measurement: "GBP"
+        device_class: monetary
+        state: >
+          {% from 'flight_macros.jinja' import select_flight %}
+          {% set chosen = select_flight(states.sensor, '2026_04_11_04_22_econ', 'cheapest_fastest')| trim %}
+          {{ states(chosen) if chosen else 'unknown' }}
+        attributes:
+          entity: >
+            {% from 'flight_macros.jinja' import select_flight %}
+            {{ select_flight(states.sensor, '2026_04_11_04_22_econ', 'cheapest_fastest')| trim }}
+          duration: >
+            {% from 'flight_macros.jinja' import select_flight %}
+            {% set chosen = select_flight(states.sensor, '2026_04_11_04_22_econ', 'cheapest_fastest')| trim %}
+            {{ state_attr(chosen, 'duration') if chosen else 'unknown' }}
+      - name: "Fastest Flight Overall"
+        unit_of_measurement: "GBP"
+        device_class: monetary
+        state: >
+          {% from 'flight_macros.jinja' import select_flight %}
+          {% set chosen = select_flight(states.sensor, '2026_04_11_04_22_econ', 'fastest')| trim %}
+          {{ states(chosen) if chosen else 'unknown' }}
+        attributes:
+          entity: >
+            {% from 'flight_macros.jinja' import select_flight %}
+            {{ select_flight(states.sensor, '2026_04_11_04_22_econ', 'fastest')| trim }}
+          duration: >
+            {% from 'flight_macros.jinja' import select_flight %}
+            {% set chosen = select_flight(states.sensor, '2026_04_11_04_22_econ', 'fastest')| trim %}
+            {{ state_attr(chosen, 'duration') if chosen else 'unknown' }}

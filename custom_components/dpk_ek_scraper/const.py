@@ -19,10 +19,6 @@ CONF_MAX_LEGS = "max_legs"
 CONF_MAX_DURATION = "max_duration"
 CONF_CLASS = "class"
 
-CONF_MONTH = "month"
-CONF_YEAR = "year"
-CONF_DAYS = "days_to_scrape"
-
 ATTR_ORIGIN = "origin"
 ATTR_ORIGIN_NAME = "origin_name"
 ATTR_DEPARTURE_TIME = "departure_time"
