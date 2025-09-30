@@ -1,6 +1,8 @@
 {
     "name": "DPK EK Scraper",
-    "country": "ALL",
+    "domains": [
+        "flight_tracker"
+    ],
     "hide_default_branch": true,
     "homeassistant": "2025.9.4",
     "render_readme": true
