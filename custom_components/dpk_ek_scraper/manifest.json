@@ -1,7 +1,9 @@
 {
   "domain": "dpk_ek_scraper",
   "name": "DPK Reward Scraper",
-  "after_dependencies": [],
+  "after_dependencies": [
+    "python_script"
+  ],
   "codeowners": [
     "@dpktjf"
   ],
