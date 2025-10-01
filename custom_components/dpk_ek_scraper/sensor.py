@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from h11 import Data
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -13,7 +12,6 @@ from homeassistant.components.sensor import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from custom_components.dpk_ek_scraper.api_models import FlightSearchResult, ReturnFlight
 from custom_components.dpk_ek_scraper.const import (
     ATTR_ARRIVAL_TIME,
     ATTR_DEPARTURE_TIME,
@@ -43,7 +41,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from custom_components.dpk_ek_scraper.api_models import Flight
+    from custom_components.dpk_ek_scraper.api_models import Flight, ReturnFlight
 
     from .coordinator import ScraperDataUpdateCoordinator
     from .data import ScraperConfigEntry
@@ -60,8 +58,10 @@ async def async_setup_entry(
     # use the typed .flights property
     # skipping individual legs for now - too many sensors
     coordinator: ScraperDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    # sensors = [ScraperSensor(coordinator, flight) for flight in coordinator.flights]
-    # async_add_entities(sensors)
+    """
+    sensors = [ScraperSensor(coordinator, flight) for flight in coordinator.flights]
+    async_add_entities(sensors)
+    """
     sensors2 = [
         ScraperReturnSensor(coordinator, flight)
         for flight in coordinator.return_flights

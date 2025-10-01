@@ -47,7 +47,23 @@ _LOGGER = logging.getLogger(__name__)
 TODAY = datetime.datetime.now(tz=datetime.UTC).date().isoformat()
 
 
-def get_option(entry: ConfigEntry, key: str, default=None) -> Any:
+def get_option(entry: ConfigEntry, key: str, default: Any = None) -> Any:
+    """
+
+    Retrieve an option value from a config entry.
+
+    Checking options first, then data, and falling back to a default.
+
+    Args:
+        entry (ConfigEntry): The configuration entry to retrieve the option from.
+        key (str): The key of the option to retrieve.
+        default (Any, optional): The default value to return if the key is not
+        found. Defaults to None.
+
+    Returns:
+        Any: The value of the option if found, otherwise the default value.
+
+    """
     return entry.options.get(key, entry.data.get(key, default))
 
 
@@ -76,9 +92,10 @@ async def async_setup_entry(
     await coordinator.async_config_entry_first_refresh()
 
     entry.async_on_unload(entry.add_update_listener(async_update_options))
-    # entry.runtime_data = ScraperData(_name, api, coordinator)
-    # await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    # return True
+    """
+    entry.runtime_data = ScraperData(_name, api, coordinator)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    """
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
@@ -94,7 +111,10 @@ async def async_unload_entry(
     entry: ScraperConfigEntry,
 ) -> bool:
     """Handle removal of an entry."""
-    # return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+    """
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    """
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)

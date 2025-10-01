@@ -50,8 +50,8 @@ class LocationInfoReturn:
         Create a LocationInfoReturn instance from a dictionary.
 
         Args:
-            schedule (dict[str, Any]): A dictionary containing 'outbound' and 'return' keys,
-            each mapping to an AirportInfo dictionary.
+            schedule (dict[str, Any]): A dictionary containing 'outbound' and
+            'return' keys, each mapping to an AirportInfo dictionary.
 
         Returns:
             LocationInfoReturn: An instance of LocationInfoReturn populated with
@@ -307,7 +307,7 @@ class Flight:
             arrival=LocationInfo.from_dict(data["arrival"]),
             duration=Duration.from_dict(data["duration"]),
             price=Price.from_dict(data["price"]),
-            legs=[Leg.from_dict(l) for l in data["legs"]],
+            legs=[Leg.from_dict(leg) for leg in data["legs"]],
         )
 
     @staticmethod

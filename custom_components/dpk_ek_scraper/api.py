@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import logging
 import socket
-from threading import Lock
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
 import async_timeout
 
-from custom_components.dpk_ek_scraper.api_models import Flight, FlightSearchResult
+from custom_components.dpk_ek_scraper.api_models import FlightSearchResult
 
 if TYPE_CHECKING:
     from custom_components.dpk_ek_scraper.config import ScraperConfig
