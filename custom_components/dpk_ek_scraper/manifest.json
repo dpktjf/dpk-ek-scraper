@@ -3,7 +3,10 @@
   "name": "DPK EK Scraper",
   "version": "0.1.0",
   "documentation": "https://github.com/dpktjf/dpk-ek-scraper",
+  "issue_tracker": "https://github.com/dpktjf/dpk-ek-scraper/issues",
   "requirements": [],
-  "codeowners": ["@dpktjf"],
+  "codeowners": [
+    "@dpktjf"
+  ],
   "iot_class": "local_polling"
 }
