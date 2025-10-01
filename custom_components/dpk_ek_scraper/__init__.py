@@ -111,7 +111,6 @@ async def async_unload_entry(
     entry: ScraperConfigEntry,
 ) -> bool:
     """Handle removal of an entry."""
-
     """
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     """

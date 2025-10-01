@@ -1,3 +1,10 @@
+"""
+Configuration definitions for the dpk_ek_scraper component.
+
+This module contains dataclasses and related configuration structures for the
+scraper.
+"""
+
 from dataclasses import dataclass
 
 
