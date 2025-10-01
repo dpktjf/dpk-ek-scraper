@@ -1,6 +1,8 @@
 {
     "name": "DPK EK Scraper",
-    "content_in_root": false,
+    "zip_release": true,
     "country": "ALL",
-    "homeassistant": "2023.8.0"
+    "homeassistant": "2025.3.0",
+    "hacs": "0.19.0",
+    "filename": "dpk_ek.zip"
 }
