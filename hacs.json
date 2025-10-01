@@ -1,9 +1,6 @@
 {
     "name": "DPK EK Scraper",
-    "domains": [
-        "dpk_ek_scraper"
-    ],
+    "country": "ALL",
     "hide_default_branch": true,
-    "homeassistant": "2025.9.4",
-    "render_readme": true
+    "homeassistant": "2025.9.4"
 }
