@@ -1,8 +1,7 @@
 {
     "name": "DPK EK Scraper",
-    "zip_release": true,
     "country": "ALL",
+    "hide_default_branch": true,
     "homeassistant": "2025.3.0",
-    "hacs": "0.19.0",
-    "filename": "dpk_ek.zip"
+    "render_readme": true
 }
