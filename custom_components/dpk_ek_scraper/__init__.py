@@ -11,6 +11,7 @@ import datetime
 import logging
 from typing import TYPE_CHECKING, Any
 
+from homeassistant.components import webhook
 from homeassistant.const import (
     Platform,
 )
@@ -27,6 +28,7 @@ from .const import (
     CONF_MAX_LEGS,
     CONF_ORIGIN,
     CONF_RETURN,
+    CONF_WEBHOOK,
     DOMAIN,
 )
 from .coordinator import ScraperDataUpdateCoordinator
@@ -76,27 +78,50 @@ async def async_setup_entry(
     cfg = ScraperConfig(
         origin=get_option(entry, CONF_ORIGIN, "LON"),
         destination=get_option(entry, CONF_DEST, "DXB"),
-        departure_date=get_option(entry, CONF_DEPART, TODAY),
+        departure_date=get_option(entry, CONF_DEPART),
         return_date=get_option(entry, CONF_RETURN, TODAY),
         max_legs=get_option(entry, CONF_MAX_LEGS, 2),
         max_duration=get_option(entry, CONF_MAX_DURATION, 15.5),
         ticket_class=get_option(entry, CONF_CLASS, "Economy"),
+        webhook_id=get_option(entry, CONF_WEBHOOK),
     )
+    _LOGGER.debug("Config entry options: %s", entry.options)
+    _LOGGER.debug("Config entry data: %s", entry.data)
+    _LOGGER.debug("Using webhook_id: %s", cfg.webhook_id)
 
     api = ScraperApiClient(
         config=cfg,
         session=async_get_clientsession(hass),
     )
     # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-    coordinator = ScraperDataUpdateCoordinator(hass, api)
+    coordinator = ScraperDataUpdateCoordinator(hass, api, dict(entry.data))
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
+        "api": api,
+        "coordinator": coordinator,
+    }
+
+    async def handle_webhook(hass, webhook_id, request):
+        payload = await request.json()
+        await coordinator.async_handle_webhook(payload)
+
+    _LOGGER.debug("Registering webhook with id %s", cfg.webhook_id)
+    webhook.async_register(
+        hass,
+        DOMAIN,
+        f"My Scraper Webhook ({entry.title})",
+        cfg.webhook_id if cfg.webhook_id is not None else "iamabadwebhookid",
+        handle_webhook,
+    )
+
+    _LOGGER.info(
+        "Registered webhook for job %s at /api/webhook/%s",
+        coordinator.job_id,
+        cfg.webhook_id,
+    )
+
     await coordinator.async_config_entry_first_refresh()
 
     entry.async_on_unload(entry.add_update_listener(async_update_options))
-    """
-    entry.runtime_data = ScraperData(_name, api, coordinator)
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    """
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -110,11 +135,20 @@ async def async_unload_entry(
     hass: HomeAssistant,
     entry: ScraperConfigEntry,
 ) -> bool:
-    """Handle removal of an entry."""
-    """
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    """
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-    return unload_ok
+    """Unload a config entry and unregister its webhook."""
+    data = hass.data[DOMAIN].pop(entry.entry_id, None)
+    _LOGGER.info("Unloading entry %s", entry.entry_id)
+    if data:
+        webhook_id = entry.data.get("webhook_id")
+        if webhook_id:
+            try:
+                webhook.async_unregister(hass, webhook_id)
+                _LOGGER.info("Unregistered webhook %s", webhook_id)
+            except Exception as e:
+                _LOGGER.warning(
+                    "Webhook %s not found for unregister: %s", webhook_id, e
+                )
+
+    # Unload platforms (like sensors)
+    await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return True

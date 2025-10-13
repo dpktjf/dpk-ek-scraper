@@ -8,7 +8,9 @@ MANUFACTURER = "DPK"
 CONFIG_FLOW_VERSION = 1
 
 DEFAULT_NAME = "EK Scraper"
-UPDATE_INTERVAL = timedelta(hours=6)
+UPDATE_INTERVAL = timedelta(minutes=2)
+RAND_MIN_MINUTES = 120
+RAND_MAX_MINUTES = 481
 
 # ek
 CONF_ORIGIN = "origin"
@@ -18,6 +20,7 @@ CONF_RETURN = "return_date"
 CONF_MAX_LEGS = "max_legs"
 CONF_MAX_DURATION = "max_duration"
 CONF_CLASS = "class"
+CONF_WEBHOOK = "webhook_id"
 
 ATTR_ORIGIN = "origin"
 ATTR_ORIGIN_NAME = "origin_name"

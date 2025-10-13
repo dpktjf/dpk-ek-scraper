@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.components.webhook import async_generate_id
 
 # https://github.com/home-assistant/core/blob/master/homeassistant/const.py
 from homeassistant.const import (
@@ -15,6 +16,8 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
+
+from custom_components.dpk_ek_scraper.config import ScraperConfig
 
 from .const import (
     CONF_CLASS,
@@ -24,6 +27,7 @@ from .const import (
     CONF_MAX_LEGS,
     CONF_ORIGIN,
     CONF_RETURN,
+    CONF_WEBHOOK,
     CONFIG_FLOW_VERSION,
     DOMAIN,
 )
@@ -62,7 +66,7 @@ OPTIONS = vol.Schema(
                 mode=selector.NumberSelectorMode.BOX,  # up/down arrows
                 min=5.0,
                 max=35.0,
-                step=1.0,
+                step=0.25,
             )
         ),
     }
@@ -112,24 +116,24 @@ class ScraperConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             # Build a key tuple from user input for uniquness check
-            new_key = (
-                user_input[CONF_ORIGIN],
-                user_input[CONF_DEST],
-                user_input[CONF_CLASS],
-                user_input[CONF_DEPART],
-                user_input[CONF_RETURN],
+            new_key = ScraperConfig(
+                origin=user_input[CONF_ORIGIN],
+                destination=user_input[CONF_DEST],
+                departure_date=user_input[CONF_DEPART],
+                return_date=user_input[CONF_RETURN],
+                ticket_class=user_input[CONF_CLASS],
             )
 
             # Iterate existing entries
             for entry in self._async_current_entries():
-                existing_key = (
-                    entry.data[CONF_ORIGIN],
-                    entry.data[CONF_DEST],
-                    entry.data[CONF_CLASS],
-                    entry.data[CONF_DEPART],
-                    entry.data[CONF_RETURN],
+                existing_key = ScraperConfig(
+                    origin=entry.data[CONF_ORIGIN],
+                    destination=entry.data[CONF_DEST],
+                    departure_date=entry.data[CONF_DEPART],
+                    return_date=entry.data[CONF_RETURN],
+                    ticket_class=entry.data[CONF_CLASS],
                 )
-                if new_key == existing_key:
+                if new_key.equals(existing_key):
                     errors["base"] = "already_configured"
                     break
 
@@ -141,6 +145,8 @@ class ScraperConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input[CONF_RETURN], "%Y-%m-%d"
                 ).replace(tzinfo=datetime.UTC)
                 flight_str = f"{depart.strftime('%d-%b')} / {retrn.strftime('%d-%b')}"
+                webhook_id = async_generate_id()
+                _LOGGER.debug("Generated webhook ID: %s", webhook_id)
                 return self.async_create_entry(
                     title=(
                         f"{user_input[CONF_ORIGIN]} → {user_input[CONF_DEST]} "
@@ -148,6 +154,7 @@ class ScraperConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ),
                     # data items are immutable but options items can be changed
                     data={
+                        CONF_WEBHOOK: webhook_id,
                         CONF_ORIGIN: user_input[CONF_ORIGIN],
                         CONF_DEST: user_input[CONF_DEST],
                         CONF_CLASS: user_input[CONF_CLASS],
@@ -168,7 +175,7 @@ class MyIntegrationOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize the options flow handler with the given config entry."""
-        self.config_entry = config_entry
+        # self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -207,7 +214,14 @@ class MyIntegrationOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_MAX_DURATION,
                         self.config_entry.data.get(CONF_MAX_DURATION, 15.0),
                     ),
-                ): float,
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        mode=selector.NumberSelectorMode.BOX,  # up/down arrows
+                        min=1.0,
+                        max=35.0,
+                        step=0.25,
+                    )
+                ),
             }
         )
 

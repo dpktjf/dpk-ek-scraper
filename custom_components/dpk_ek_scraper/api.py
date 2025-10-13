@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import socket
 from typing import TYPE_CHECKING, Any
@@ -67,19 +68,38 @@ class ScraperApiClient:
     def __init__(
         self,
         config: ScraperConfig,
-        # name: str,
         session: aiohttp.ClientSession,
     ) -> None:
         """Sample API Client."""
         self.config = config
         self._session = session
+        self._base_url = "http://jupiter:1880"
+
+    async def trigger_scrape(self, webhook_url: str) -> str:
+        """Tell Node-RED to start a scrape for this job_id."""
+        url = f"{self._base_url}/ek-scraper-schedule"
+        payload = {
+            "job_id": self.config.job_id(),
+            "max_legs": self.config.max_legs,
+            "max_duration": self.config.max_duration,
+            "webhook_url": webhook_url,
+        }
+        _LOGGER.debug("url=%s, post=%s", url, json.dumps(payload))
+        ret = await self._api_wrapper_new(
+            method="post",
+            url=url,
+            data=payload,
+            headers={"Content-type": "application/json; charset=UTF-8"},
+        )
+        _LOGGER.debug("Scrape trigger (%s): %s", self.config.job_id(), ret)
+        return ret
 
     async def async_fetch_flights(self) -> FlightSearchResult:
         """Get data from the API."""
         uri = (
             f"origin={self.config.origin}&destination={self.config.destination}"
             f"&depart={self.config.departure_date}&return={self.config.return_date}"
-            f"&max_legs={int(self.config.max_legs)}&max_duration={self.config.max_duration}"
+            f"&max_legs={self.config.max_legs}&max_duration={self.config.max_duration}"
             f"&class={self.config.ticket_class}"
         )
         _LOGGER.debug("uri=%s", uri)
@@ -114,6 +134,41 @@ class ScraperApiClient:
                     len(flights.return_flights),
                 )
                 return flights
+
+        except TimeoutError as exception:
+            msg = f"Timeout error fetching information - {exception}"
+            raise ScraperCommunicationError(
+                msg,
+            ) from exception
+        except (aiohttp.ClientError, socket.gaierror) as exception:
+            msg = f"Error fetching information - {exception}"
+            raise ScraperCommunicationError(
+                msg,
+            ) from exception
+        except Exception as exception:  # pylint: disable=broad-except
+            msg = f"Something really wrong happened! - {exception}"
+            raise ScraperBadRequestError(
+                msg,
+            ) from exception
+
+    async def _api_wrapper_new(
+        self,
+        method: str,
+        url: str,
+        data: dict | None = None,
+        headers: dict | None = None,
+    ) -> str:
+        """Get information from the API."""
+        try:
+            async with async_timeout.timeout(180):
+                response = await self._session.request(
+                    method=method,
+                    url=url,
+                    headers=headers,
+                    json=data,
+                )
+                _verify_response_or_raise(response)
+                return await response.text()
 
         except TimeoutError as exception:
             msg = f"Timeout error fetching information - {exception}"

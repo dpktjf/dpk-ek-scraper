@@ -6,7 +6,8 @@ and FlightSearchResult, along with methods for deserializing these objects from
 dictionaries.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 
@@ -378,6 +379,32 @@ class ReturnFlight:
 
 
 @dataclass
+class TrackerStep:
+    """Represents a single step in a tracking history."""
+
+    step: str
+    timestamp: datetime
+    message: str
+
+    @staticmethod
+    def from_dict(data: dict[str, Any]) -> "TrackerStep":
+        """Parse a dict into a TrackerStep instance."""
+        return TrackerStep(
+            step=data["step"],
+            timestamp=datetime.fromisoformat(data["timestamp"]),
+            message=data["message"],
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert TrackerStep back to a serializable dict."""
+        return {
+            "step": self.step,
+            "timestamp": self.timestamp.isoformat(),
+            "message": self.message,
+        }
+
+
+@dataclass
 class FlightSearchResult:
     """
     Represents the result of a flight search.
@@ -389,9 +416,12 @@ class FlightSearchResult:
 
     """
 
-    outbound: list[Flight]
-    return_: list[Flight]  # "return" is a reserved word, so use return_
-    return_flights: list[ReturnFlight]
+    job_id: str
+    result: int
+    outbound: list[Flight] = field(default_factory=list)
+    return_: list[Flight] = field(default_factory=list)
+    return_flights: list[ReturnFlight] = field(default_factory=list)
+    tracker: list[TrackerStep] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "FlightSearchResult":
@@ -408,11 +438,14 @@ class FlightSearchResult:
 
         """
         return cls(
+            job_id=data.get("job_id", ""),
+            result=data.get("result", 0),
             outbound=[Flight.from_dict(f) for f in data.get("outbound", [])],
             return_=[Flight.from_dict(f) for f in data.get("return", [])],
             return_flights=[
                 ReturnFlight.from_dict(f) for f in data.get("combined", [])
             ],
+            tracker=[TrackerStep.from_dict(f) for f in data.get("tracker", [])],
         )
 
     @property

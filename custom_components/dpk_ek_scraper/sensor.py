@@ -57,7 +57,8 @@ async def async_setup_entry(
     """Set up the sensor platform."""
     # use the typed .flights property
     # skipping individual legs for now - too many sensors
-    coordinator: ScraperDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    # coordinator: ScraperDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     """
     sensors = [ScraperSensor(coordinator, flight) for flight in coordinator.flights]
     async_add_entities(sensors)
@@ -110,11 +111,17 @@ class ScraperSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the current price of the flight."""
-        flight = next(
-            (f for f in self.coordinator.data.all_flights if f.id == self.flight.id),
-            None,
-        )
-        return flight.price.amount if flight else None
+        if self.coordinator.data and hasattr(self.coordinator.data, "all_flights"):
+            flight = next(
+                (
+                    f
+                    for f in self.coordinator.data.all_flights
+                    if f.id == self.flight.id
+                ),
+                None,
+            )
+            return flight.price.amount if flight else None
+        return None
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -172,11 +179,17 @@ class ScraperReturnSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the current price of the flight."""
-        flight = next(
-            (f for f in self.coordinator.data.return_flights if f.id == self.flight.id),
-            None,
-        )
-        return flight.price.total if flight else None
+        if self.coordinator.data and hasattr(self.coordinator.data, "return_flights"):
+            flight = next(
+                (
+                    f
+                    for f in self.coordinator.data.return_flights
+                    if f.id == self.flight.id
+                ),
+                None,
+            )
+            return flight.price.total if flight else None
+        return None
 
     @property
     def extra_state_attributes(self) -> dict:
