@@ -100,7 +100,8 @@ async def async_setup_entry(
         "coordinator": coordinator,
     }
 
-    async def handle_webhook(hass, webhook_id, request):
+    async def handle_webhook(hass: HomeAssistant, webhook_id, request) -> None:  # noqa: ANN001, ARG001
+        _LOGGER.debug("Received webhook for job %s", webhook_id)
         payload = await request.json()
         await coordinator.async_handle_webhook(payload)
 
@@ -144,7 +145,7 @@ async def async_unload_entry(
             try:
                 webhook.async_unregister(hass, webhook_id)
                 _LOGGER.info("Unregistered webhook %s", webhook_id)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 _LOGGER.warning(
                     "Webhook %s not found for unregister: %s", webhook_id, e
                 )

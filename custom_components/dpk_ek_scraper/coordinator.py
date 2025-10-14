@@ -62,7 +62,8 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[FlightSearchResult | No
             webhook_id = self.config.get(CONF_WEBHOOK)
             url = f"http://192.168.1.174:8123/api/webhook/{webhook_id}"
             if webhook_id is None:
-                raise UpdateFailed("Webhook ID is missing in the configuration.")
+                msg = "Webhook ID is missing in the configuration."
+                raise UpdateFailed(msg)  # noqa: TRY301
             url = webhook.async_generate_url(self.hass, webhook_id)
             await self.api.trigger_scrape(url)
         except Exception as err:
