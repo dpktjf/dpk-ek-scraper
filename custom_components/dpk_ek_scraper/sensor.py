@@ -65,9 +65,13 @@ async def async_setup_entry(
     sensors = [ScraperSensor(coordinator, flight) for flight in coordinator.flights]
     async_add_entities(sensors)
     """
+    _LOGGER.debug("Setting up sensors for return flights")
+    _LOGGER.debug("job id=%s", coordinator.data.job_id)
+    _LOGGER.debug("Coordinator data: %s", coordinator.is_ok())
+    _LOGGER.debug("Return flights: %s", coordinator.return_flights())
     sensors2 = [
         ScraperReturnSensor(coordinator, flight)
-        for flight in coordinator.return_flights
+        for flight in coordinator.return_flights()
     ]
     async_add_entities(sensors2)
 

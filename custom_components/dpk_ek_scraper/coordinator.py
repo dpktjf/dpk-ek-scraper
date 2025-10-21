@@ -44,6 +44,7 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[FlightSearchResult | No
     ) -> None:
         """Initialize."""
         self.hass = hass
+        self.hass = hass
         self.api = client
         self.config = config
         self.data: FlightSearchResult | None = None
@@ -77,6 +78,7 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[FlightSearchResult | No
         _LOGGER.debug(
             "Next scrape for %s scheduled in %d minutes", self.job_id, new_minutes
         )
+        _LOGGER.debug("Using local res.json for testing webhook handling")
         return self.data
 
     @callback
