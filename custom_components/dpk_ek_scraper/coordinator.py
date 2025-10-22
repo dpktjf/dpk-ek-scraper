@@ -100,8 +100,8 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[FlightSearchResult | No
             len(result.return_flights),
         )
 
-        self.async_set_updated_data(result)
         self.data = result
+        self.async_set_updated_data(self.data)
 
     @property
     def return_flights(self) -> list[ReturnFlight]:

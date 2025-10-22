@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(
+async def async_setup_entry_old(
     hass: HomeAssistant,
     entry: ScraperConfigEntry,
     async_add_entities: AddEntitiesCallback,
@@ -75,6 +75,38 @@ async def async_setup_entry(
         for flight in coordinator.return_flights()
     ]
     async_add_entities(sensors2)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ScraperConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the sensor platform with dynamic entity creation."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    added_ids: set[str] = set()
+
+    def _update_entities() -> None:
+        """Check for new flights and add sensors dynamically."""
+        new_entities = []
+        # Fetch the current flights from coordinator
+        flights = coordinator.return_flights()
+        _LOGGER.debug("Coordinator reports %d return flights", len(flights))
+
+        for flight in flights:
+            if flight.id not in added_ids:
+                _LOGGER.debug("Discovered new flight id=%s, creating sensor", flight.id)
+                new_entities.append(ScraperReturnSensor(coordinator, flight))
+                added_ids.add(flight.id)
+
+        if new_entities:
+            async_add_entities(new_entities)
+
+    # Add any initial flights at startup
+    _update_entities()
+
+    # Listen for coordinator updates (triggered by webhook)
+    coordinator.async_add_listener(_update_entities)
 
 
 class ScraperSensor(CoordinatorEntity, SensorEntity):
