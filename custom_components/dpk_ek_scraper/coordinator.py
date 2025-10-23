@@ -69,16 +69,15 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[FlightSearchResult | No
             await self.api.trigger_scrape(url)
         except Exception as err:
             raise UpdateFailed(f"API error: {err}") from err  # noqa: EM102, TRY003
-        # ✅ After triggering, randomize the next interval -basically between the
+        # After triggering, randomize the next interval -basically between the
         # rand_min_minutes and rand_max_minutes values in const.py
-        # to avoid hitting EK too regularly
-        # (which might lead to blocking)
+        # to avoid hitting EK too regularly (which might lead to blocking)
         new_minutes = secrets.randbelow(RAND_MAX_MINUTES) + RAND_MIN_MINUTES
+        new_minutes = 2
         self.update_interval = timedelta(minutes=new_minutes)
         _LOGGER.debug(
             "Next scrape for %s scheduled in %d minutes", self.job_id, new_minutes
         )
-        _LOGGER.debug("Using local res.json for testing webhook handling")
         return self.data
 
     @callback
@@ -101,7 +100,7 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[FlightSearchResult | No
         )
 
         self.data = result
-        self.async_set_updated_data(self.data)
+        self.async_set_updated_data(result)
 
     @property
     def return_flights(self) -> list[ReturnFlight]:

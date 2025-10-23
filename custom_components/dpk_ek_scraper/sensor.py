@@ -84,14 +84,16 @@ async def async_setup_entry(
 ) -> None:
     """Set up the sensor platform with dynamic entity creation."""
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-    added_ids: set[str] = set()
+    domain_data = hass.data[DOMAIN][entry.entry_id]
+    added_ids: set[str] = domain_data["added_ids"]
 
     def _update_entities() -> None:
         """Check for new flights and add sensors dynamically."""
         new_entities = []
         # Fetch the current flights from coordinator
-        flights = coordinator.return_flights()
+        flights = coordinator.return_flights
         _LOGGER.debug("Coordinator reports %d return flights", len(flights))
+        _LOGGER.debug("added_ids=%s", list(added_ids))
 
         for flight in flights:
             if flight.id not in added_ids:
