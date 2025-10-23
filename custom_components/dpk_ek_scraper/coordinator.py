@@ -73,7 +73,6 @@ class ScraperDataUpdateCoordinator(DataUpdateCoordinator[FlightSearchResult | No
         # rand_min_minutes and rand_max_minutes values in const.py
         # to avoid hitting EK too regularly (which might lead to blocking)
         new_minutes = secrets.randbelow(RAND_MAX_MINUTES) + RAND_MIN_MINUTES
-        new_minutes = 2
         self.update_interval = timedelta(minutes=new_minutes)
         _LOGGER.debug(
             "Next scrape for %s scheduled in %d minutes", self.job_id, new_minutes
